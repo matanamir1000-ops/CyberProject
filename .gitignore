@@ -10,3 +10,27 @@ env/
 # קבצי הגדרות של IDE (כמו VS Code)
 .vscode/
 .idea/
+
+# --- תוספות חדשות ---
+
+# קבצים אישיים ומסמכי עבודה מקומיים
+claude.MD
+
+# קבצי ניתוח רשת ותעבורה (כמו מ-Wireshark או Scapy)
+*.pcap
+*.pcapng
+*.cap
+
+# קבצי עבודה של כלי Reverse Engineering (כמו IDA Pro)
+# אלו קבצי מסד נתונים זמניים שנוצרים בזמן ניתוח קבצים
+*.idb
+*.i64
+*.nam
+*.til
+*.id0
+*.id1
+*.id2
+
+# קבצי מערכת הפעלה (כללי)
+.DS_Store
+Thumbs.db
