@@ -48,15 +48,23 @@ sock.sendall(b"DEF")
 
 # רץ ברקע ושומע מה השרת זורק עלינו. חובה ת'רד נפרד אחרת ה-GUI נתקע על recv.
 def listen_to_server():
+    # באפר שאוגר נתונים חלקיים עד שמגיע ~ שמסמן סוף הודעה
+    buffer = ""
     while True:
         try:
             data = sock.recv(1024).decode()
             if not data:
                 break
-            # מכניסים הודעה חדשה לראש הרשימה, ואם יש יותר מ-5 מעיפים את האחרונה כדי שלא יגלוש לנו מהמסך
-            radar_events.insert(0, data)
-            if len(radar_events) > 5:
-                radar_events.pop()
+            buffer += data
+            # מפצלים על ~ ושולפים כל הודעה שלמה בנפרד. חלק לא שלם נשאר בבאפר להמשך
+            while "~" in buffer:
+                message, buffer = buffer.split("~", 1)
+                if not message:
+                    continue
+                # מכניסים הודעה חדשה לראש הרשימה, ואם יש יותר מ-5 מעיפים את האחרונה כדי שלא יגלוש לנו מהמסך
+                radar_events.insert(0, message)
+                if len(radar_events) > 5:
+                    radar_events.pop()
         except:
             break
 

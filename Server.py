@@ -9,9 +9,9 @@ from scapy.all import *
 # בודק אם מישהו הגיע ל-10 נקודות. אם כן - מודיע לשניים, סוגר הכל ומכבה את השרת.
 def check_winner(scores, connected_players):
     if scores["DEF"] >= 10:
-        msg = b"DEFENDER WINS"
+        msg = b"DEFENDER WINS~"
     elif scores["ATK"] >= 10:
-        msg = b"ATTACKER WINS"
+        msg = b"ATTACKER WINS~"
     else:
         return
     for s in connected_players.values():
@@ -43,8 +43,8 @@ def radar_sniffer(active_rules, connected_players, scores):
 
             if data in active_rules["words"]:
                 print(f"BLOCKED! Caught forbidden word: {data}")
-                if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED")
-                if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED")
+                if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED~")
+                if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED~")
                 # נקודה למגן - הוא תפס את הפקטה
                 scores["DEF"] += 1
                 check_winner(scores, connected_players)
@@ -52,8 +52,8 @@ def radar_sniffer(active_rules, connected_players, scores):
 
             if len(packet) > active_rules["max_size"]:
                 print(f"BLOCKED! Packet size {len(packet)} exceeded max size.")
-                if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED")
-                if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED")
+                if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED~")
+                if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED~")
                 scores["DEF"] += 1
                 check_winner(scores, connected_players)
                 return
@@ -62,8 +62,8 @@ def radar_sniffer(active_rules, connected_players, scores):
                 sender_ip = packet[IP].src
                 if sender_ip in active_rules["ips"]:
                     print(f"BLOCKED! Source IP {sender_ip} is banned.")
-                    if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED")
-                    if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED")
+                    if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED~")
+                    if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED~")
                     scores["DEF"] += 1
                     check_winner(scores, connected_players)
                     return
@@ -71,16 +71,16 @@ def radar_sniffer(active_rules, connected_players, scores):
             target_port = packet[UDP].dport
             if target_port in active_rules["ports"]:
                 print(f"BLOCKED! Port {target_port} is closed.")
-                if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED")
-                if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED")
+                if "ATK" in connected_players: connected_players["ATK"].sendall(b"MISSED~")
+                if "DEF" in connected_players: connected_players["DEF"].sendall(b"SCORED~")
                 scores["DEF"] += 1
                 check_winner(scores, connected_players)
                 return
 
             # עברה את כל הפילטרים - התוקף הצליח לעקוף את החומה!
             print("PASS! The packet successfully bypassed the firewall!")
-            if "DEF" in connected_players: connected_players["DEF"].sendall(b"MISSED")
-            if "ATK" in connected_players: connected_players["ATK"].sendall(b"SCORED")
+            if "DEF" in connected_players: connected_players["DEF"].sendall(b"MISSED~")
+            if "ATK" in connected_players: connected_players["ATK"].sendall(b"SCORED~")
             # נקודה לתוקף כי הוא הצליח לעקוף אותנו
             scores["ATK"] += 1
             check_winner(scores, connected_players)
@@ -106,7 +106,7 @@ def handle_client(sock, addr , connected_players, active_rules):
         return
     # מונעים מצב ששני שחקנים יתפסו את אותו תפקיד
     if role in connected_players:
-        sock.sendall(b"Role taken")
+        sock.sendall(b"Role taken~")
         print(f"[SERVER LOG] Role {role} is already taken!")
         sock.close()
         return
@@ -119,9 +119,9 @@ def handle_client(sock, addr , connected_players, active_rules):
 
     # ספירה לאחור 3-2-1 ואז GO
     for i in range(3, 0, -1):
-        sock.sendall(str(i).encode())
+        sock.sendall(f"{i}~".encode())
         time.sleep(1)
-    sock.sendall(b'START')
+    sock.sendall(b'START~')
 
     # פה הקטע החשוב - TCP יכול לשבור הודעות באמצע, אז אנחנו אוגרים בבאפר
     # ומחפשים את התו ~ שמסמן סוף הודעה. בלי זה היינו מקבלים בלאגן.
