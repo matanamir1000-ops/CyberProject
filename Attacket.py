@@ -1,3 +1,4 @@
+__author__ = 'Matan Amir'
 from scapy.all import *
 import socket
 import threading

@@ -1,3 +1,4 @@
+__author__ = 'Matan Amir'
 import socket
 import time
 import threading
