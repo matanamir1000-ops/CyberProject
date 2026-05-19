@@ -19,7 +19,6 @@ def listen_for_messages(sock):
             if not data:
                 break
             print(f"\n[SERVER]: {data}")
-            # הגיע סוף משחק - מודיעים ויוצאים
             if "WIN" in data:
                 print("\n=== GAME OVER ===")
                 os._exit(0)
@@ -31,20 +30,17 @@ def main():
 
     print("--- Attacker Booting Up ---")
 
-    # קורא את כתובת ה-IP של השרת מארגומנט שורת הפקודה, ואם אין - חוזר לברירת המחדל.
     if len(sys.argv) > 1:
         server_ip = sys.argv[1]
     else:
         server_ip = DEFAULT_IP
 
-    # מתחברים לשרת ומזדהים כתוקף - בלי זה השרת לא יתחיל את המשחק
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((server_ip, SERVER_PORT))
         sock.sendall(b"ATK")
         print(f"Connected to {server_ip}:{SERVER_PORT} as ATK. Waiting for Defender and Server sync...")
 
-        # מחכים שהשרת יסיים את הספירה לאחור וישלח START
         while True:
             data = sock.recv(1024).decode()
             if not data:
@@ -56,7 +52,6 @@ def main():
         print("Server is offline! Run Server.py first.")
         return
 
-    # מעבירים את ההאזנה לת'רד ברקע כי המנו חוסם עם input()
     threading.Thread(target=listen_for_messages, args=(sock,), daemon=True).start()
 
     print("\n--- GO! Choose your weapon ---")
@@ -87,7 +82,6 @@ def main():
             packet = IP(src="8.8.8.8", dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:HELLO")
             send(packet)
         elif choice == "4":
-            # מטען שמן של 1500 תווים, אמור לעבור את הגודל המקסימלי
             heavy_payload = "GAME:" + "A" * 1500
             packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load=heavy_payload)
             send(packet)
@@ -101,7 +95,6 @@ def main():
             packet = IP(dst=server_ip) / UDP(dport=6767) / Raw(load="GAME:PROBE")
             send(packet)
         elif choice == "8":
-            # מקרה קצה לבדיקת קריסות של השרת - רק התחילית בלי כלום אחרי
             packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:")
             send(packet)
         elif choice == "9":

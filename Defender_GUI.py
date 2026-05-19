@@ -15,10 +15,8 @@ DEFAULT_IP = '127.0.0.1'
 SERVER_PORT = 8888
 
 
-# רץ ברקע ושומע מה השרת זורק עלינו. חובה ת'רד נפרד אחרת ה-GUI נתקע על recv.
-# מקבל את הסוקט ואת רשימת האירועים כארגומנטים - בלי משתנים גלובליים.
+# רץ בת'רד נפרד כי recv חוסם - בלעדיו ה-GUI היה קופא בין הודעה להודעה מהשרת.
 def listen_to_server(sock, radar_events):
-    # באפר שאוגר נתונים חלקיים עד שמגיע ~ שמסמן סוף הודעה
     buffer = ""
     while True:
         try:
@@ -26,12 +24,10 @@ def listen_to_server(sock, radar_events):
             if not data:
                 break
             buffer += data
-            # מפצלים על ~ ושולפים כל הודעה שלמה בנפרד. חלק לא שלם נשאר בבאפר להמשך
             while "~" in buffer:
                 message, buffer = buffer.split("~", 1)
                 if not message:
                     continue
-                # מכניסים הודעה חדשה לראש הרשימה, ואם יש יותר מ-5 מעיפים את האחרונה כדי שלא יגלוש לנו מהמסך
                 radar_events.insert(0, message)
                 if len(radar_events) > 5:
                     radar_events.pop()
@@ -39,8 +35,7 @@ def listen_to_server(sock, radar_events):
             break
 
 
-# פונקציית עזר: בונה את ההודעה לפי הפרוטוקול ושולחת. תמיד מוסיף ~ בסוף!
-# מקבל את הסוקט כארגומנט במקום להסתמך על משתנה גלובלי.
+# בונה הודעה לפי הפרוטוקול ושולחת. ה-~ בסוף הוא הדלימיטר שהשרת מצפה לו.
 def send_rule(sock, code, value):
     msg = f"{code} {value}~"
     sock.sendall(msg.encode())
@@ -78,10 +73,8 @@ def main():
     ip_text = ""
     word_text = ""
 
-    # רשימת האירועים האחרונים מהשרת. הת'רד דוחף הודעות חדשות לראש, ה-GUI מצייר.
     radar_events = []
 
-    # מתחברים לשרת ומזדהים כמגן. ה-~ בסוף זה הדלימיטר שהשרת מצפה לו.
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((server_ip, SERVER_PORT))
@@ -92,7 +85,6 @@ def main():
         pygame.quit()
         return
 
-    # מעבירים לת'רד את הסוקט ואת הרשימה כארגומנטים - אין יותר משתנים גלובליים
     threading.Thread(target=listen_to_server, args=(sock, radar_events), daemon=True).start()
 
     running = True
@@ -102,7 +94,6 @@ def main():
                 running = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # קודם בודקים פוקוס על תיבות הקלט
                 if port_box.collidepoint(event.pos):
                     active_box = 'port'
                 elif ip_box.collidepoint(event.pos):
@@ -112,9 +103,8 @@ def main():
                 else:
                     active_box = None
 
-                # לחיצה על כפתור BLOCK - שולחים את החוק לשרת ומנקים את התיבה
                 if port_btn.collidepoint(event.pos):
-                    # רק מספרים בפורט, אחרת השרת יקרוס על int()
+                    # בדיקת isdigit מונעת קריסת int() בשרת על קלט לא מספרי
                     if port_text and port_text.isdigit():
                         send_rule(sock, "P", port_text)
                         port_text = ""
@@ -152,7 +142,6 @@ def main():
         word_label = font.render("Forbidden Word:", True, (200, 220, 255))
         screen.blit(word_label, (word_box.x, word_box.y - 25))
 
-        # מסגרת ירוקה אם בפוקוס, אפורה אחרת
         p_color = TEXT_COLOR if active_box == 'port' else INACTIVE_COLOR
         i_color = TEXT_COLOR if active_box == 'ip' else INACTIVE_COLOR
         w_color = TEXT_COLOR if active_box == 'word' else INACTIVE_COLOR
@@ -181,7 +170,6 @@ def main():
         pygame.draw.rect(screen, RADAR_BG, radar_box)
         pygame.draw.rect(screen, TEXT_COLOR, radar_box, 2)
 
-        # מציירים את כל האירועים מהראש - האחרון נכנס למעלה, הישנים יורדים
         for i, msg in enumerate(radar_events):
             event_surf = font.render(msg, True, TEXT_COLOR)
             screen.blit(event_surf, (radar_box.x + 20, radar_box.y + 30 + i * 30))
