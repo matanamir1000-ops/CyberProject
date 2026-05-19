@@ -4,6 +4,10 @@ import socket
 import threading
 import time
 import os
+import sys
+
+DEFAULT_IP = '127.0.0.1'
+SERVER_PORT = 8888
 
 
 # רץ ברקע אחרי שהמשחק התחיל ומקשיב להודעות מהשרת.
@@ -27,12 +31,18 @@ def main():
 
     print("--- Attacker Booting Up ---")
 
+    # קורא את כתובת ה-IP של השרת מארגומנט שורת הפקודה, ואם אין - חוזר לברירת המחדל.
+    if len(sys.argv) > 1:
+        server_ip = sys.argv[1]
+    else:
+        server_ip = DEFAULT_IP
+
     # מתחברים לשרת ומזדהים כתוקף - בלי זה השרת לא יתחיל את המשחק
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        sock.connect(('127.0.0.1', 8888))
+        sock.connect((server_ip, SERVER_PORT))
         sock.sendall(b"ATK")
-        print("Connected as ATK. Waiting for Defender and Server sync...")
+        print(f"Connected to {server_ip}:{SERVER_PORT} as ATK. Waiting for Defender and Server sync...")
 
         # מחכים שהשרת יסיים את הספירה לאחור וישלח START
         while True:
@@ -51,33 +61,54 @@ def main():
 
     print("\n--- GO! Choose your weapon ---")
 
-    # כל הפקטות חייבות "GAME:" בהתחלה אחרת הראדאר לא רואה אותן
+# כל הפקטות חייבות "GAME:" בהתחלה אחרת הראדאר לא רואה אותן
     while True:
         print("\n=============================")
         print(" 1 - Port Block (dport 8888)")
-        print(" 2 - Word Block (GAME:HACK)")
-        print(" 3 - IP Block (spoofed 8.8.8.8)")
-        print(" 4 - Size Block (fat packet)")
-        print(" 5 - Ninja Packet (should pass)")
+        print(" 2 - Word Block (GAME:HACK, dport 11111)")
+        print(" 3 - IP Block (spoofed 8.8.8.8, dport 10000)")
+        print(" 4 - Size Block (fat packet, dport 10000)")
+        print(" 5 - Ninja Packet (GAME:NINJA, should pass)")
+        print(" 6 - Hacker IP Block (spoofed 13.37.13.37, dport 10000)")
+        print(" 7 - New Port Block (dport 6767)")
+        print(" 8 - Edge Case (Empty payload 'GAME:', dport 10000)")
+        print(" 9 - Word Block 2 (GAME:VIRUS, dport 10000)")
+        print(" 10 - Ghost Packet (GAME:GHOST, should pass)")
         print("=============================")
-        choice = input("Pick a packet (1-5): ").strip()
+        choice = input("Pick a packet (1-10): ").strip()
 
         if choice == "1":
-            packet = IP(dst="127.0.0.1") / UDP(dport=8888) / Raw(load="GAME:TEST")
+            packet = IP(dst=server_ip) / UDP(dport=8888) / Raw(load="GAME:TEST")
             send(packet)
         elif choice == "2":
-            packet = IP(dst="127.0.0.1") / UDP(dport=10000) / Raw(load="GAME:HACK")
+            packet = IP(dst=server_ip) / UDP(dport=11111) / Raw(load="GAME:HACK")
             send(packet)
         elif choice == "3":
-            packet = IP(src="8.8.8.8", dst="127.0.0.1") / UDP(dport=10000) / Raw(load="GAME:HELLO")
+            packet = IP(src="8.8.8.8", dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:HELLO")
             send(packet)
         elif choice == "4":
             # מטען שמן של 1500 תווים, אמור לעבור את הגודל המקסימלי
             heavy_payload = "GAME:" + "A" * 1500
-            packet = IP(dst="127.0.0.1") / UDP(dport=10000) / Raw(load=heavy_payload)
+            packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load=heavy_payload)
             send(packet)
         elif choice == "5":
-            packet = IP(dst="127.0.0.1") / UDP(dport=10000) / Raw(load="GAME:NINJA")
+            packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:NINJA")
+            send(packet)
+        elif choice == "6":
+            packet = IP(src="13.37.13.37", dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:PING")
+            send(packet)
+        elif choice == "7":
+            packet = IP(dst=server_ip) / UDP(dport=6767) / Raw(load="GAME:PROBE")
+            send(packet)
+        elif choice == "8":
+            # מקרה קצה לבדיקת קריסות של השרת - רק התחילית בלי כלום אחרי
+            packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:")
+            send(packet)
+        elif choice == "9":
+            packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:VIRUS")
+            send(packet)
+        elif choice == "10":
+            packet = IP(dst=server_ip) / UDP(dport=10000) / Raw(load="GAME:GHOST")
             send(packet)
         else:
             print("Invalid choice, try again.")

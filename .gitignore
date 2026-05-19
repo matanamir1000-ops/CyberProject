@@ -11,10 +11,14 @@ env/
 .vscode/
 .idea/
 
+# הגדרות אישיות של Claude Code
+.claude/
+
 # --- תוספות חדשות ---
 
 # קבצים אישיים ומסמכי עבודה מקומיים
 claude.MD
+Plan.txt
 
 # קבצי ניתוח רשת ותעבורה (כמו מ-Wireshark או Scapy)
 *.pcap

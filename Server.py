@@ -17,9 +17,12 @@ def check_winner(scores, connected_players):
     for s in connected_players.values():
         try: s.sendall(msg)
         except: pass
+    # נותנים לבאפר של הרשת זמן לשלוח את ההודעה לפני שסוגרים הכל
+    time.sleep(1)
+    for s in connected_players.values():
         try: s.close()
         except: pass
-    print(f"[GAME OVER] {msg.decode()}")
+    print(f"{msg.decode()}")
     # os._exit כי יש לנו ת'רדים שלא ייסגרו לבד (sniff חוסם לעד)
     os._exit(0)
 
