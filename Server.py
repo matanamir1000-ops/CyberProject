@@ -81,7 +81,7 @@ def radar_sniffer(active_rules, connected_players, scores):
             check_winner(scores, connected_players)
 
     # loopback: שני הצדדים רצים על אותו מחשב
-    packets = sniff(filter="udp", prn=process_packet, iface=conf.loopback_name)
+    packets = sniff(filter="udp", prn=process_packet)
 
 def handle_client(sock, addr , connected_players, active_rules):
     """מטפל בלקוח יחיד: הזדהות, סנכרון תחילת משחק וקליטת חוקים מהמגן."""
